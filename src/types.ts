@@ -21,6 +21,7 @@ export interface RankedNarrator extends CountedNarrator {
 
 export interface RankingReport {
   ranking: RankedNarrator[];
+  narrators?: NarratorCount[];
   unresolved?: NarratorCount[];
   coverage: string;
   metric?: string;

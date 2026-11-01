@@ -31,6 +31,9 @@ export function topRanking(records: CountRecords, limit = 20) {
   const data = publicRanking(normalized);
   return {
     ...data,
+    narrators: Object.values(normalized).sort((a, b) =>
+      a.name.localeCompare(b.name, 'ja'),
+    ),
     generated_at: new Date().toISOString(),
     total_narrators: data.ranking.length,
     rank_limit: limit,
