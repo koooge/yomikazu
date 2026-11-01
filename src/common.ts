@@ -6,6 +6,7 @@ import type {
   NarratorCount,
 } from './types.ts';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
+
 export const BASE = 'https://www.audible.co.jp';
 export const nameKey = (name: string) =>
   name.normalize('NFKC').replace(/\s+/gu, '');
@@ -21,6 +22,7 @@ export const readJSON = <T>(path: string, fallback: T): T =>
   existsSync(path) ? JSON.parse(readFileSync(path, 'utf8')) : fallback;
 export const writeJSON = (path: string, value: unknown) =>
   writeFileSync(path, JSON.stringify(value, null, 2) + '\n');
+
 export function searchURL(value: string) {
   const url = new URL(value);
   if (
@@ -32,6 +34,7 @@ export function searchURL(value: string) {
     throw Error('Expected an Audible Japan search URL');
   return url.href;
 }
+
 export function orderedRows<T extends CountedNarrator>(
   records: T[],
 ): (T & { rank: number })[] {
@@ -46,6 +49,7 @@ export function orderedRows<T extends CountedNarrator>(
       return { ...row, rank };
     });
 }
+
 export function render(
   output: string,
   data: RankingReport,

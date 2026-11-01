@@ -5,6 +5,7 @@ import { pathToFileURL } from 'node:url';
 import { nameKey, readJSON, render, publicRanking } from './common.ts';
 
 // Each spelling remains in the source snapshot. Never add search totals together.
+
 export function topRanking(records: CountRecords, limit = 20) {
   const groups = new Map<string, NarratorCount[]>();
   for (const row of Object.values(records)) {
@@ -36,6 +37,7 @@ export function topRanking(records: CountRecords, limit = 20) {
     ranking: data.ranking.filter((r) => r.rank <= limit),
   };
 }
+
 export function build(input = 'data/public-counts.json', output = 'dist') {
   const data = topRanking(readJSON<CountRecords>(input, {}));
   if (!data.ranking.length)
@@ -49,5 +51,6 @@ export function build(input = 'data/public-counts.json', output = 'dist') {
   );
   return data;
 }
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
   build();

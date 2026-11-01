@@ -1,9 +1,11 @@
 import type { CatalogResponse } from './types.ts';
+
 type FetchCatalog = (
   url: string,
   options: RequestInit,
 ) => Promise<{ ok: boolean; status?: number; json(): Promise<unknown> }>;
 export const API_BASE = 'https://api.audible.co.jp';
+
 export function catalogURL(params: Record<string, string> = {}) {
   const url = new URL('/1.0/catalog/products', API_BASE);
   url.search = new URLSearchParams({
@@ -13,6 +15,7 @@ export function catalogURL(params: Record<string, string> = {}) {
   }).toString();
   return url.href;
 }
+
 export function validateCatalog(data: unknown): CatalogResponse {
   if (
     !data ||
@@ -28,6 +31,7 @@ export function validateCatalog(data: unknown): CatalogResponse {
   }
   return data as CatalogResponse;
 }
+
 export async function fetchCatalog(
   params: Record<string, string> = {},
   fetchImpl: FetchCatalog = fetch,

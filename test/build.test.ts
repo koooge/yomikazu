@@ -4,6 +4,7 @@ import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { topRanking, build } from '../src/build.ts';
+
 test('Includes ties at rank 20 and excludes lower ranks', () => {
   const records = Object.fromEntries(
     Array.from({ length: 23 }, (_, i) => [

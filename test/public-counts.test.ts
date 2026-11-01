@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { searchURL, publicRanking } from '../src/common.ts';
 import { fetchCatalog, validateCatalog } from '../src/api.ts';
 import { main } from '../src/public-counts.ts';
+
 test('Validates API responses, sends unauthenticated requests, and handles failures', async () => {
   assert.throws(() => validateCatalog({ products: [], total_results: -1 }));
   assert.throws(() => validateCatalog({ products: [] }));

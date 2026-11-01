@@ -13,8 +13,10 @@ import {
   render,
 } from './common.ts';
 import { fetchCatalog, catalogURL } from './api.ts';
+
 export const narratorURL = (name: string) =>
   BASE + '/search?' + new URLSearchParams({ searchNarrator: name });
+
 export async function main(
   args = process.argv.slice(2),
   request: typeof fetchCatalog = fetchCatalog,
@@ -143,6 +145,7 @@ export async function main(
   );
   if (a.refresh) build(a.counts, dirname(a.output));
 }
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href)
   main().catch((e) => {
     console.error('Error: ' + e.message);
