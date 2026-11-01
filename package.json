@@ -3,16 +3,18 @@
   "version": "1.0.0",
   "description": "Audibleナレーターの作品数ランキング",
   "scripts": {
-    "test": "node --test test/*.test.ts",
-    "refresh-data": "npm run typecheck && node src/public-counts.ts --refresh --force",
-    "typecheck": "tsc --noEmit"
+    "test": "bun test",
+    "refresh-data": "bun run typecheck && bun src/public-counts.ts --refresh --force",
+    "typecheck": "bun check",
+    "lint": "oxlint src test --deny-warnings",
+    "fmt": "bun fmt --no-script"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/koooge/yomikazu.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "koooge",
   "license": "MIT",
   "type": "module",
   "bugs": {
@@ -21,10 +23,11 @@
   "homepage": "https://github.com/koooge/yomikazu#readme",
   "private": true,
   "engines": {
-    "node": "26.x"
+    "bun": ">=1.4.4"
   },
   "devDependencies": {
     "@types/node": "^26.6.6",
-    "typescript": "^7.0.2"
-  }
+    "oxlint": "^1.90.0"
+  },
+  "packageManager": "bun@1.4.4"
 }

@@ -9,8 +9,13 @@ export interface NarratorCount {
   source_type?: string;
 }
 export type CountRecords = Record<string, NarratorCount>;
-export interface CountedNarrator extends NarratorCount { count: number }
-export interface RankedNarrator extends CountedNarrator { rank: number; key?: string }
+export interface CountedNarrator extends NarratorCount {
+  count: number;
+}
+export interface RankedNarrator extends CountedNarrator {
+  rank: number;
+  key?: string;
+}
 export interface RankingReport {
   ranking: RankedNarrator[];
   unresolved?: NarratorCount[];
@@ -21,4 +26,7 @@ export interface RankingReport {
   total_narrators?: number;
   rank_limit?: number;
 }
-export interface CatalogResponse {products: unknown[]; total_results: number}
+export interface CatalogResponse {
+  products: unknown[];
+  total_results: number;
+}
