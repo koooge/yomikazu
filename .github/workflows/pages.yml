@@ -2,6 +2,9 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    # Daily at 06:00 JST (21:00 UTC).
+    - cron: '0 21 * * *'
   workflow_dispatch:
 permissions:
   contents: read
