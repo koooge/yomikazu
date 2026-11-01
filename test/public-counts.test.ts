@@ -134,3 +134,67 @@ test('Builds the top ranking and excludes removed candidates from refresh', asyn
     rmSync(folder, { recursive: true });
   }
 });
+
+test('Refreshes concurrently within the limit and saves successes and failures', async () => {
+  const folder = mkdtempSync(join(tmpdir(), 'yomikazu-parallel-'));
+  try {
+    const counts = join(folder, 'counts.json');
+    const candidates = join(folder, 'names.json');
+    const names = ['A', 'B', 'C', 'D', 'E', 'F'];
+    writeFileSync(candidates, JSON.stringify(names));
+    writeFileSync(counts, JSON.stringify({ B: { name: 'B', count: 999 } }));
+    let active = 0;
+    let peak = 0;
+    const calls: string[] = [];
+    await main(
+      [
+        '--refresh',
+        '--force',
+        '--concurrency',
+        '3',
+        '--delay',
+        '0',
+        '--counts',
+        counts,
+        '--candidates',
+        candidates,
+        '--output',
+        join(folder, 'report.html'),
+      ],
+      async (params = {}) => {
+        const name = params.narrator;
+        calls.push(name);
+        peak = Math.max(peak, ++active);
+        try {
+          await new Promise((resolve) => setTimeout(resolve, 10));
+          if (name === 'B') throw Error('Catalog API: HTTP 429');
+          return { products: [], total_results: 100 };
+        } finally {
+          active--;
+        }
+      },
+    );
+    assert.equal(peak, 3);
+    assert.equal(active, 0);
+    assert.deepEqual(calls.sort(), names);
+    const saved = JSON.parse(readFileSync(counts, 'utf8'));
+    assert.equal(Object.keys(saved).length, 6);
+    assert.match(saved.B.error, /429/);
+    for (const name of names.filter((n) => n !== 'B')) {
+      assert.equal(saved[name].count, 100);
+      assert.ok(saved[name].checked_at);
+    }
+    const report = JSON.parse(readFileSync(join(folder, 'index.json'), 'utf8'));
+    assert.equal(report.ranking.length, 5);
+    assert.equal(report.unresolved.length, 1);
+  } finally {
+    rmSync(folder, { recursive: true });
+  }
+});
+
+test('Rejects invalid concurrency and delay values', async () => {
+  for (const value of ['0', '-1', '1.5', 'NaN', 'Infinity']) {
+    await assert.rejects(main(['--concurrency', value]), /concurrency/);
+  }
+  await assert.rejects(main(['--delay', '-1']), /delay/);
+});

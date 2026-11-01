@@ -15,7 +15,10 @@ import {
 import { fetchCatalog, catalogURL } from './api.ts';
 export const narratorURL = (name: string) =>
   BASE + '/search?' + new URLSearchParams({ searchNarrator: name });
-export async function main(args = process.argv.slice(2)) {
+export async function main(
+  args = process.argv.slice(2),
+  request: typeof fetchCatalog = fetchCatalog,
+) {
   const { values: a } = parseArgs({
     args,
     options: {
@@ -42,19 +45,23 @@ export async function main(args = process.argv.slice(2)) {
       refresh: { type: 'boolean' },
       force: { type: 'boolean' },
       limit: { type: 'string', default: '0' },
-      delay: { type: 'string', default: '3' },
+      delay: { type: 'string', default: '0' },
+      concurrency: { type: 'string', default: '4' },
     },
   });
   const delay = Number(a.delay),
-    limit = Number(a.limit);
+    limit = Number(a.limit),
+    concurrency = Number(a.concurrency);
   if (
     !Number.isFinite(delay) ||
-    delay < 1 ||
+    delay < 0 ||
     !Number.isInteger(limit) ||
-    limit < 0
+    limit < 0 ||
+    !Number.isSafeInteger(concurrency) ||
+    concurrency < 1
   )
     throw Error(
-      'delay must be at least 1 second and limit must be a non-negative integer',
+      'delay must be non-negative, limit must be a non-negative integer, and concurrency must be a positive integer',
     );
   const savedRecords = readJSON<CountRecords>(a.counts, {});
   const candidates = readJSON<unknown>(a.candidates, []);
@@ -96,27 +103,37 @@ export async function main(args = process.argv.slice(2)) {
         x.name.localeCompare(y.name, 'ja'),
     );
     if (limit) todo = todo.slice(0, limit);
-    for (const row of todo) {
-      try {
-        await setTimeout(delay * 1000);
-        const data = await fetchCatalog({
-          narrator: row.name,
-          num_results: '1',
-        });
-        Object.assign(row, {
-          count: data.total_results,
-          lower_bound: false,
-          checked_at: new Date().toISOString(),
-          source: catalogURL({ narrator: row.name, num_results: '1' }),
-          source_type: 'audible_catalog_api',
-        });
-        delete row.error;
-      } catch (error) {
-        row.error = error instanceof Error ? error.message : String(error);
+    const queue = todo.values();
+    const worker = async () => {
+      let first = true;
+      for (const row of queue) {
+        if (!first && delay > 0) await setTimeout(delay * 1000);
+        first = false;
+        try {
+          const data = await request({
+            narrator: row.name,
+            num_results: '1',
+          });
+          Object.assign(row, {
+            count: data.total_results,
+            lower_bound: false,
+            checked_at: new Date().toISOString(),
+            source: catalogURL({ narrator: row.name, num_results: '1' }),
+            source_type: 'audible_catalog_api',
+          });
+          delete row.error;
+        } catch (error) {
+          row.error = error instanceof Error ? error.message : String(error);
+        }
+        console.log(`${row.name}: ${row.error ?? row.count}`);
+        writeJSON(a.counts, records);
       }
-      console.log(`${row.name}: ${row.error ?? row.count}`);
-      writeJSON(a.counts, records);
-    }
+    };
+    await Promise.all(
+      Array.from({ length: Math.min(concurrency, todo.length) }, () =>
+        worker(),
+      ),
+    );
   }
   render(
     a.output,
