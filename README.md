@@ -1,6 +1,8 @@
-# yomikazu
+# yomikazu（読み数）
 
 Audibleのナレーターを作品数で比較するランキングです。
+
+[ランキングを見る](https://koooge.github.io/yomikazu/)
 
 ## 実行
 
