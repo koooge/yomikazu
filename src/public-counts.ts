@@ -141,7 +141,7 @@ export async function main(
     a.output,
     publicRanking(records),
     a.target,
-    'Audible日本版のカタログAPI検索結果（全言語）。配信予定やポッドキャスト等を含む可能性があります。表記ゆれは未統合です。同数は同順位。「以上」と取得失敗は順位に含めません。',
+    '登録したナレーターのAudible日本版での作品数を比較しています。配信予定作品やポッドキャストを含む場合があります。同数は同順位です。',
   );
   if (a.refresh) build(a.counts, dirname(a.output));
 }
