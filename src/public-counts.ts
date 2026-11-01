@@ -12,10 +12,12 @@ import {
   publicRanking,
   render,
 } from './common.ts';
-import { fetchCatalog, catalogURL } from './api.ts';
+import { fetchCatalog, catalogURL, narratorQuery } from './api.ts';
 
 export const narratorURL = (name: string) =>
-  BASE + '/search?' + new URLSearchParams({ searchNarrator: name });
+  BASE +
+  '/search?' +
+  new URLSearchParams({ searchNarrator: narratorQuery(name) });
 
 export async function main(
   args = process.argv.slice(2),
@@ -78,9 +80,10 @@ export async function main(
     ...a.name,
     ...(a.target ? [a.target] : []),
   ]) {
-    const key = nameKey(name);
+    const displayName = name.normalize('NFKC').trim().replace(/\s+/gu, ' ');
+    const key = nameKey(displayName);
     if (key !== 'デジタルボイス' && !uniqueNames.has(key))
-      uniqueNames.set(key, name);
+      uniqueNames.set(key, displayName);
   }
   const names = new Set(uniqueNames.values());
   const records: CountRecords = Object.fromEntries(
@@ -112,15 +115,17 @@ export async function main(
         if (!first && delay > 0) await setTimeout(delay * 1000);
         first = false;
         try {
-          const data = await request({
-            narrator: row.name,
+          const params = {
+            narrator: narratorQuery(row.name),
             num_results: '1',
-          });
+          };
+          const data = await request(params);
           Object.assign(row, {
             count: data.total_results,
             lower_bound: false,
             checked_at: new Date().toISOString(),
-            source: catalogURL({ narrator: row.name, num_results: '1' }),
+            source: catalogURL(params),
+            url: narratorURL(row.name),
             source_type: 'audible_catalog_api',
           });
           delete row.error;

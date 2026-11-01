@@ -199,3 +199,52 @@ test('Rejects invalid concurrency and delay values', async () => {
   }
   await assert.rejects(main(['--delay', '-1']), /delay/);
 });
+
+test('Uses AND queries for name components without changing display names', async () => {
+  const folder = mkdtempSync(join(tmpdir(), 'yomikazu-name-query-'));
+  try {
+    const counts = join(folder, 'counts.json');
+    const candidates = join(folder, 'names.json');
+    writeFileSync(
+      candidates,
+      JSON.stringify(['  朗読　 太郎 ', 'Jane\u00a0Mary  Doe', '単名']),
+    );
+    const calls: string[] = [];
+    await main(
+      [
+        '--refresh',
+        '--force',
+        '--counts',
+        counts,
+        '--candidates',
+        candidates,
+        '--output',
+        join(folder, 'report.html'),
+      ],
+      async (params = {}) => {
+        calls.push(params.narrator);
+        return { products: [], total_results: 100 };
+      },
+    );
+    assert.deepEqual(
+      calls.sort(),
+      ['Jane AND Mary AND Doe', '単名', '朗読 AND 太郎'].sort(),
+    );
+    const saved = JSON.parse(readFileSync(counts, 'utf8'));
+    assert.deepEqual(
+      Object.keys(saved).sort(),
+      ['朗読 太郎', 'Jane Mary Doe', '単名'].sort(),
+    );
+    assert.equal(
+      new URL(saved['Jane Mary Doe'].source).searchParams.get('narrator'),
+      'Jane AND Mary AND Doe',
+    );
+    assert.equal(
+      new URL(saved['朗読 太郎'].url).searchParams.get('searchNarrator'),
+      '朗読 AND 太郎',
+    );
+    assert.equal(saved['朗読 太郎'].name, '朗読 太郎');
+  } finally {
+    rmSync(folder, { recursive: true });
+  }
+});

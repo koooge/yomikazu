@@ -6,6 +6,15 @@ type FetchCatalog = (
 ) => Promise<{ ok: boolean; status?: number; json(): Promise<unknown> }>;
 export const API_BASE = 'https://api.audible.co.jp';
 
+export function narratorQuery(name: string) {
+  return name
+    .normalize('NFKC')
+    .trim()
+    .split(/\s+/u)
+    .filter(Boolean)
+    .join(' AND ');
+}
+
 export function catalogURL(params: Record<string, string> = {}) {
   const url = new URL('/1.0/catalog/products', API_BASE);
   url.search = new URLSearchParams({
