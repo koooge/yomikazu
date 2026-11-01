@@ -1,0 +1,30 @@
+{
+  "name": "yomikazu",
+  "version": "1.0.0",
+  "description": "Audibleナレーターの作品数ランキング",
+  "scripts": {
+    "test": "node --test test/*.test.ts",
+    "refresh-data": "npm run typecheck && node src/public-counts.ts --refresh --force",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/koooge/yomikazu.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/koooge/yomikazu/issues"
+  },
+  "homepage": "https://github.com/koooge/yomikazu#readme",
+  "private": true,
+  "engines": {
+    "node": "26.x"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
+  }
+}

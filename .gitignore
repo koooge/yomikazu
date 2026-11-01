@@ -1,4 +1,7 @@
 # Logs
+# Local API response data
+/data/public-counts.json
+
 logs
 *.log
 npm-debug.log*
