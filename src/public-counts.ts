@@ -4,7 +4,14 @@ import type { CountRecords } from './types.ts';
 import { parseArgs } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout } from 'node:timers/promises';
-import { BASE, readJSON, writeJSON, publicRanking, render } from './common.ts';
+import {
+  BASE,
+  nameKey,
+  readJSON,
+  writeJSON,
+  publicRanking,
+  render,
+} from './common.ts';
 import { fetchCatalog, catalogURL } from './api.ts';
 export const narratorURL = (name: string) =>
   BASE + '/search?' + new URLSearchParams({ searchNarrator: name });
@@ -49,16 +56,27 @@ export async function main(args = process.argv.slice(2)) {
     throw Error(
       'delay must be at least 1 second and limit must be a non-negative integer',
     );
-  const records = readJSON<CountRecords>(a.counts, {});
+  const savedRecords = readJSON<CountRecords>(a.counts, {});
   const candidates = readJSON<unknown>(a.candidates, []);
   if (
     !Array.isArray(candidates) ||
     candidates.some((name) => typeof name !== 'string' || !name.trim())
   )
     throw Error('Candidates must be an array of non-empty names');
-  const names = new Set([...candidates, ...a.name]);
-  if (a.target) names.add(a.target);
-  names.delete('デジタルボイス');
+  const uniqueNames = new Map<string, string>();
+  for (const name of [
+    ...candidates,
+    ...a.name,
+    ...(a.target ? [a.target] : []),
+  ]) {
+    const key = nameKey(name);
+    if (key !== 'デジタルボイス' && !uniqueNames.has(key))
+      uniqueNames.set(key, name);
+  }
+  const names = new Set(uniqueNames.values());
+  const records: CountRecords = Object.fromEntries(
+    Object.entries(savedRecords).filter(([name]) => names.has(name)),
+  );
   for (const name of names)
     if (!Object.hasOwn(records, name))
       Object.defineProperty(records, name, {
@@ -68,6 +86,7 @@ export async function main(args = process.argv.slice(2)) {
         configurable: true,
       });
   if (a.refresh) {
+    writeJSON(a.counts, records);
     let todo = Object.values(records).filter(
       (r) => a.force || r.count == null || r.error,
     );

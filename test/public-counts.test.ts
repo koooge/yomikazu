@@ -81,7 +81,13 @@ test('Supports optional targets and candidate files, escapes HTML, and has no de
     );
     writeFileSync(
       candidates,
-      JSON.stringify(['候補 一郎', '候補 二郎', '候補 一郎']),
+      JSON.stringify([
+        '候補 一郎',
+        '候補 二郎',
+        '候補 一郎',
+        '候補一郎',
+        '候補　 二郎',
+      ]),
     );
     await main(args);
     assert.deepEqual(
@@ -95,16 +101,19 @@ test('Supports optional targets and candidate files, escapes HTML, and has no de
   }
 });
 
-test('Builds the top ranking after a refresh with cached counts', async () => {
+test('Builds the top ranking and excludes removed candidates from refresh', async () => {
   const folder = mkdtempSync(join(tmpdir(), 'yomikazu-refresh-'));
   try {
     const counts = join(folder, 'counts.json'),
       candidates = join(folder, 'names.json');
     writeFileSync(
       counts,
-      JSON.stringify({ sample: { name: 'Sample', count: 10 } }),
+      JSON.stringify({
+        Sample: { name: 'Sample', count: 100 },
+        Removed: { name: 'Removed', count: 10, error: 'Previous failure' },
+      }),
     );
-    writeFileSync(candidates, '[]');
+    writeFileSync(candidates, JSON.stringify(['Sample']));
     await main([
       '--refresh',
       '--counts',
@@ -117,6 +126,10 @@ test('Builds the top ranking after a refresh with cached counts', async () => {
     const report = JSON.parse(readFileSync(join(folder, 'index.json'), 'utf8'));
     assert.equal(report.ranking[0].name, 'Sample');
     assert.equal(report.rank_limit, 20);
+    assert.equal(report.total_narrators, 1);
+    assert.deepEqual(Object.keys(JSON.parse(readFileSync(counts, 'utf8'))), [
+      'Sample',
+    ]);
   } finally {
     rmSync(folder, { recursive: true });
   }

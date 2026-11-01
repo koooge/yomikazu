@@ -11,7 +11,7 @@ bun run refresh-data
 
 `dist/index.html`をブラウザーで開きます。件数の再取得とHTML生成は同じコマンドで行えます。
 
-候補は[`data/narrators.json`](data/narrators.json)を編集して追加します。取得済みの件数データにある名前も更新対象に残ります。
+候補は[`data/narrators.json`](data/narrators.json)を編集して追加します。リストから削除した名前は更新・表示の対象から外れます。現在の候補は、保存済みの件数で20以下と確認できた名前を除外しています。
 
 ```bash
 # 候補を一時的に追加して更新
