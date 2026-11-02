@@ -32,6 +32,7 @@ export async function handleRequest(
     !/^[1-3]$/.test(url.searchParams.get('num_results') ?? '1')
   )
     return new Response('Invalid catalog query', { status: 400, headers });
+  let stage = 'fetch';
   try {
     const upstream = await fetchImpl(
       catalogURL({
@@ -45,14 +46,28 @@ export async function handleRequest(
         headers: { Accept: 'application/json', 'User-Agent': 'Yomikazu/0.1' },
       },
     );
-    if (!upstream.ok)
+    if (!upstream.ok) {
+      console.error('Audible API returned an error', {
+        status: upstream.status,
+      });
       return new Response('Audible API request failed', {
         status: upstream.status,
-        headers,
+        headers: { ...headers, 'X-Yomikazu-Error': 'upstream-http' },
       });
-    return Response.json(validateCatalog(await upstream.json()), { headers });
-  } catch {
-    return new Response('Audible API request failed', { status: 502, headers });
+    }
+    stage = 'read-json';
+    const data: unknown = await upstream.json();
+    stage = 'validate-catalog';
+    return Response.json(validateCatalog(data), { headers });
+  } catch (error) {
+    console.error('Audible proxy request failed', {
+      stage,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+    return new Response('Audible API request failed', {
+      status: 502,
+      headers: { ...headers, 'X-Yomikazu-Error': stage },
+    });
   }
 }
 

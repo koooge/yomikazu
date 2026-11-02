@@ -3,7 +3,12 @@ import type { CatalogResponse } from './types.ts';
 type FetchCatalog = (
   url: string,
   options: RequestInit,
-) => Promise<{ ok: boolean; status?: number; json(): Promise<unknown> }>;
+) => Promise<{
+  ok: boolean;
+  status?: number;
+  headers?: Headers;
+  json(): Promise<unknown>;
+}>;
 export const API_BASE = 'https://api.audible.co.jp';
 
 export function narratorQuery(name: string) {
@@ -72,6 +77,13 @@ export async function fetchCatalog(
     signal: AbortSignal.timeout(30000),
     headers,
   });
-  if (!response.ok) throw Error(`Catalog API: HTTP ${response.status}`);
+  if (!response.ok) {
+    const reason = proxy.url
+      ? response.headers?.get('X-Yomikazu-Error')
+      : undefined;
+    throw Error(
+      `Catalog API: HTTP ${response.status}${reason ? ` (${reason})` : ''}`,
+    );
+  }
   return validateCatalog(await response.json());
 }

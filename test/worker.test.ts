@@ -87,5 +87,31 @@ test('Returns upstream errors and rejects invalid catalog responses', async () =
       async () => upstream,
     );
     assert.equal(response.status, upstream.status === 429 ? 429 : 502);
+    assert.equal(
+      response.headers.get('X-Yomikazu-Error'),
+      upstream.status === 429 ? 'upstream-http' : 'validate-catalog',
+    );
+  }
+});
+
+test('Reports proxy failures in catalog client errors', async () => {
+  for (const reason of [
+    'fetch',
+    'read-json',
+    'validate-catalog',
+    'upstream-http',
+  ]) {
+    await assert.rejects(
+      fetchCatalog(
+        { narrator: 'Sample', num_results: '1' },
+        async () =>
+          new Response('Audible API request failed', {
+            status: 502,
+            headers: { 'X-Yomikazu-Error': reason },
+          }),
+        { url: 'https://proxy.example', token: 'test-token' },
+      ),
+      new RegExp(`HTTP 502 \\(${reason}\\)`),
+    );
   }
 });
