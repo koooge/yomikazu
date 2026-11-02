@@ -41,11 +41,20 @@ export async function handleRequest(
         response_groups: 'contributors,product_attrs',
       }),
       {
-        redirect: 'error',
+        redirect: 'manual',
         signal: AbortSignal.timeout(20000),
         headers: { Accept: 'application/json', 'User-Agent': 'Yomikazu/0.1' },
       },
     );
+    if (upstream.status >= 300 && upstream.status < 400) {
+      console.error('Audible API returned an unexpected redirect', {
+        status: upstream.status,
+      });
+      return new Response('Unexpected Audible API redirect', {
+        status: 502,
+        headers: { ...headers, 'X-Yomikazu-Error': 'upstream-redirect' },
+      });
+    }
     if (!upstream.ok) {
       console.error('Audible API returned an error', {
         status: upstream.status,

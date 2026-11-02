@@ -57,7 +57,7 @@ test('Routes catalog requests through the proxy without forwarding the shared to
             'Sample AND Narrator',
           );
           assert.equal(new Headers(init?.headers).has('Authorization'), false);
-          assert.equal(init?.redirect, 'error');
+          assert.equal(init?.redirect, 'manual');
           return Response.json({ products: [], total_results: 123 });
         },
       );
@@ -114,4 +114,23 @@ test('Reports proxy failures in catalog client errors', async () => {
       new RegExp(`HTTP 502 \\(${reason}\\)`),
     );
   }
+});
+
+test('Rejects upstream redirects without redirecting the proxy client', async () => {
+  const response = await handleRequest(
+    new Request('https://proxy.example/1.0/catalog/products?narrator=Sample', {
+      headers: { Authorization: 'Bearer test-token' },
+    }),
+    { PROXY_TOKEN: 'test-token' },
+    async (_url, options) => {
+      assert.equal(options?.redirect, 'manual');
+      return new Response(null, {
+        status: 302,
+        headers: { Location: 'https://example.com' },
+      });
+    },
+  );
+  assert.equal(response.status, 502);
+  assert.equal(response.headers.get('X-Yomikazu-Error'), 'upstream-redirect');
+  assert.equal(response.headers.has('Location'), false);
 });
