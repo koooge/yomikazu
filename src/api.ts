@@ -44,11 +44,33 @@ export function validateCatalog(data: unknown): CatalogResponse {
 export async function fetchCatalog(
   params: Record<string, string> = {},
   fetchImpl: FetchCatalog = fetch,
+  proxy = {
+    url: process.env.AUDIBLE_PROXY_URL,
+    token: process.env.AUDIBLE_PROXY_TOKEN,
+  },
 ) {
-  const response = await fetchImpl(catalogURL(params), {
+  const url = new URL(catalogURL(params));
+  const headers: Record<string, string> = {
+    Accept: 'application/json',
+    'User-Agent': 'Yomikazu/0.1',
+  };
+  if (proxy.url) {
+    const endpoint = new URL(proxy.url);
+    if (
+      endpoint.protocol !== 'https:' ||
+      endpoint.username ||
+      endpoint.password
+    )
+      throw Error('Expected an HTTPS proxy URL without credentials');
+    if (!proxy.token) throw Error('AUDIBLE_PROXY_TOKEN is required');
+    url.protocol = endpoint.protocol;
+    url.host = endpoint.host;
+    headers.Authorization = `Bearer ${proxy.token}`;
+  }
+  const response = await fetchImpl(url.href, {
     redirect: 'error',
     signal: AbortSignal.timeout(30000),
-    headers: { Accept: 'application/json', 'User-Agent': 'Yomikazu/0.1' },
+    headers,
   });
   if (!response.ok) throw Error(`Catalog API: HTTP ${response.status}`);
   return validateCatalog(await response.json());

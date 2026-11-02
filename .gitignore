@@ -1,4 +1,7 @@
 # Logs
+.wrangler/
+.dev.vars
+.dev.vars.*
 # Local API response data
 /data/public-counts.json
 

@@ -24,6 +24,17 @@ bun run refresh-data --name 'ナレーター名'
 
 件数は`data/public-counts.json`に保存します。件数データと生成HTMLはコミットしません。
 
+## 環境変数
+
+| 名前                  | 説明                                                                              |
+| --------------------- | --------------------------------------------------------------------------------- |
+| `AUDIBLE_PROXY_URL`   | プロキシのベースURL（HTTPS）。未設定・空文字の場合はAudible APIに直接接続します。 |
+| `AUDIBLE_PROXY_TOKEN` | プロキシに送る共有トークン。`AUDIBLE_PROXY_URL`を設定する場合は必須です。         |
+
+GitHub Actionsでは、`AUDIBLE_PROXY_URL`をリポジトリのActions variable、`AUDIBLE_PROXY_TOKEN`をActions secretに登録します。
+
+プロキシ側の`PROXY_TOKEN`には、`AUDIBLE_PROXY_TOKEN`と同じ値を登録します。トークンはコミットしません。
+
 ## 集計基準
 
 **調査対象内の暫定ランキング**です。候補の網羅性は未確認で、Audible全体の上位20位を保証しません。

@@ -24,6 +24,9 @@ jobs:
       - run: bun fmt --check
       - run: bun test
       - run: bun run refresh-data
+        env:
+          AUDIBLE_PROXY_URL: ${{ vars.AUDIBLE_PROXY_URL }}
+          AUDIBLE_PROXY_TOKEN: ${{ secrets.AUDIBLE_PROXY_TOKEN }}
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
